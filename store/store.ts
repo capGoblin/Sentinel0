@@ -91,23 +91,39 @@ export const useStore = create<FileSystemState>((set, get) => ({
   },
 
   addFolder: (name, path = get().currentPath) => {
-    const newFolder: Omit<File, "id"> = {
-      name,
-      type: "folder",
-      owner: "me",
-      lastModified: new Date().toLocaleDateString(),
-      size: "-",
-    };
-    get().addFile(newFolder, path);
+    set((state) => {
+      const newFilesByPath = { ...state.filesByPath };
+      if (!newFilesByPath[path]) {
+        newFilesByPath[path] = [];
+      }
 
-    // Initialize empty array for the new folder's path
-    const newFolderPath = path === "/" ? `/${name}` : `${path}/${name}`;
-    set((state) => ({
-      filesByPath: {
-        ...state.filesByPath,
-        [newFolderPath]: [],
-      },
-    }));
+      // Check if folder with same name exists
+      let folderName = name;
+      let counter = 1;
+      while (newFilesByPath[path].some((f) => f.name === folderName)) {
+        folderName = `${name} (${counter})`;
+        counter++;
+      }
+
+      // Add the folder to current path
+      newFilesByPath[path] = [
+        ...newFilesByPath[path],
+        {
+          id: crypto.randomUUID(),
+          name: folderName,
+          type: "folder", // Explicitly set type as folder
+          owner: "me",
+          lastModified: new Date().toLocaleDateString(),
+          size: "-",
+        },
+      ];
+
+      // Initialize empty array for the new folder's path
+      const newFolderPath = path === "/" ? `/${folderName}` : `${path}/${folderName}`;
+      newFilesByPath[newFolderPath] = [];
+
+      return { filesByPath: newFilesByPath };
+    });
   },
 
   deleteFile: (name, path = get().currentPath) => {
