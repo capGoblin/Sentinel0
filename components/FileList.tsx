@@ -19,6 +19,7 @@ import {
 import { useStore, getParentPath, getPathSegments } from "@/store/store";
 import { Fragment } from "react";
 
+
 export default function FileList() {
   const { currentPath, setCurrentPath, getFilesAtPath } = useStore();
   const files = getFilesAtPath(currentPath);
@@ -29,6 +30,8 @@ export default function FileList() {
       currentPath === "/" ? `/${folderName}` : `${currentPath}/${folderName}`;
     setCurrentPath(newPath);
   };
+
+  
 
   return (
     <>

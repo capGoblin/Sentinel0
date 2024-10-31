@@ -1,11 +1,21 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import { Folder, Star, FileText, Plus } from "lucide-react";
 import { useState, useRef } from "react";
 import NewFolderDialog from "./NewFolderDialog";
 import { useStore } from "@/store/store";
+import {
+  Blob,
+  Indexer,
+  getFlowContract,
+} from "@0glabs/0g-ts-sdk";
+import { ethers } from "ethers";
 
 export default function Sidebar() {
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -17,27 +27,40 @@ export default function Sidebar() {
     setShowNewFolderDialog(false);
   };
 
-  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileUpload = async (
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
     const file = event.target.files?.[0];
     if (!file) return;
 
-    // Determine file type
-    const fileType: "text" | "image" = file.type.startsWith("image/") 
-      ? "image" 
-      : "text";
+    try {
+      // First upload the file to 0g storage
+      const rootHash = await uploadFile(file);
+      console.log("File uploaded with root hash:", rootHash);
 
-    // Create file entry
-    addFile({
-      name: file.name,
-      type: fileType,
-      owner: "me",
-      lastModified: new Date().toLocaleDateString(),
-      size: formatFileSize(file.size),
-    });
+      // Determine file type
+      const fileType: "text" | "image" = file.type.startsWith("image/")
+        ? "image"
+        : "text";
 
-    // Reset input
-    if (fileInputRef.current) {
-      fileInputRef.current.value = "";
+      // Create file entry with additional metadata
+      addFile({
+        name: file.name,
+        type: fileType,
+        owner: "me",
+        lastModified: new Date().toLocaleDateString(),
+        size: formatFileSize(file.size),
+        // rootHash: rootHash, // Store the root hash for future reference
+      });
+
+      // Reset input
+      if (fileInputRef.current) {
+        fileInputRef.current.value = "";
+      }
+    } catch (error) {
+      console.error("Error uploading file:", error);
+      // You might want to add some error handling UI here
+      alert("Failed to upload file. Please try again.");
     }
   };
 
@@ -49,6 +72,23 @@ export default function Sidebar() {
     return `${parseFloat((bytes / Math.pow(k, i)).toFixed(1))} ${sizes[i]}`;
   };
 
+  async function uploadFile(fileObj: File) {
+    const formData = new FormData();
+    formData.append('file', fileObj);
+
+    const response = await fetch('/api/upload-file', {
+      method: 'POST',
+      body: formData,
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to upload file');
+    }
+
+    const data = await response.json();
+    return data.rootHash; // Return the root hash from the response
+  }
+
   return (
     <div className="w-64 border-r p-4">
       <input
@@ -57,7 +97,7 @@ export default function Sidebar() {
         className="hidden"
         onChange={handleFileUpload}
       />
-      
+
       <Popover>
         <PopoverTrigger asChild>
           <Button className="w-full justify-start gap-2 mb-6" variant="outline">
@@ -86,24 +126,26 @@ export default function Sidebar() {
       </Popover>
 
       <div className="space-y-2">
-        <Button 
-          variant="ghost" 
-          className={`w-full justify-start ${currentPath === "/" ? "bg-muted" : ""}`}
+        <Button
+          variant="ghost"
+          className={`w-full justify-start ${
+            currentPath === "/" ? "bg-muted" : ""
+          }`}
           onClick={() => setCurrentPath("/")}
         >
           <Folder className="mr-2 h-4 w-4" />
           My Drive
         </Button>
-        <Button 
-          variant="ghost" 
+        <Button
+          variant="ghost"
           className="w-full justify-start"
           onClick={() => setCurrentPath("/starred")}
         >
           <Star className="mr-2 h-4 w-4" />
           Starred
         </Button>
-        <Button 
-          variant="ghost" 
+        <Button
+          variant="ghost"
           className="w-full justify-start opacity-50"
           onClick={() => setCurrentPath("/shared")}
         >

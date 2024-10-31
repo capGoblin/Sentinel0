@@ -3,7 +3,7 @@
 "use client";
 
 import { createAppKit } from "@reown/appkit/react";
-import { Ethers5Adapter } from "@reown/appkit-adapter-ethers5";
+import { EthersAdapter } from "@reown/appkit-adapter-ethers";
 import {
   sepolia,
   scrollSepolia,
@@ -31,7 +31,7 @@ const metadata = {
 
 // 3. Create the AppKit instance
 createAppKit({
-  adapters: [new Ethers5Adapter()],
+  adapters: [new EthersAdapter()],
   metadata,
   networks: [
     sepolia,
