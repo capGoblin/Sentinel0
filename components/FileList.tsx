@@ -27,14 +27,28 @@ import {
   Star,
 } from "lucide-react";
 import { useStore, getParentPath, getPathSegments } from "@/store/store";
-import { Fragment } from "react";
+import { Fragment, useState } from "react";
 import type { File } from "@/store/store";
+import { handleSubmit } from "@/components/Sidebar";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
 
 export default function FileList() {
   const { currentPath, setCurrentPath, getFilesAtPath, isUploading } =
     useStore();
   const files = getFilesAtPath(currentPath);
   const segments = getPathSegments(currentPath);
+
+  const [isShareDialogOpen, setIsShareDialogOpen] = useState(false);
+  const [shareAddress, setShareAddress] = useState("");
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
 
   const navigateToFolder = (folderName: string) => {
     const newPath =
@@ -82,11 +96,35 @@ export default function FileList() {
   };
 
   const handleShare = async (file: File) => {
+    if (!file.rootHash) {
+      alert("No root hash found for file");
+      return;
+    }
+    setSelectedFile(file);
+    setIsShareDialogOpen(true);
+  };
+
+  const handleShareSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
     try {
-      const shareLink = await generateShareLink(file);
+      if (!selectedFile?.rootHash) {
+        throw new Error("No root hash found for file");
+      }
+
+      const txHash = await handleSubmit(
+        `${currentPath}/${selectedFile.name}`,
+        selectedFile.rootHash,
+        // meaning it is shared with this address
+        shareAddress + "(s)"
+      );
+
+      console.log(`File shared successfully! Transaction: ${txHash}`);
       
-      await navigator.clipboard.writeText(shareLink);
-      alert("Share link copied to clipboard!");
+      // Reset form
+      setShareAddress("");
+      setSelectedFile(null);
+      setIsShareDialogOpen(false);
     } catch (error) {
       console.error("Share failed:", error);
       alert("Failed to share file. Please try again.");
@@ -103,11 +141,11 @@ export default function FileList() {
     // }
   };
 
-  const generateShareLink = async (file: File) => {
-    const baseUrl = window.location.origin;
-    const shareToken = "unique-token";
-    return `${baseUrl}/share/${shareToken}`;
-  };
+  // const generateShareLink = async (file: File) => {
+  //   const baseUrl = window.location.origin;
+  //   const shareToken = "unique-token";
+  //   return `${baseUrl}/share/${shareToken}`;
+  // };
 
   const LoadingSkeleton = () => (
     <TableRow>
@@ -231,6 +269,42 @@ export default function FileList() {
           </TableBody>
         </Table>
       </div>
+
+      <Dialog open={isShareDialogOpen} onOpenChange={setIsShareDialogOpen}>
+        <DialogContent>
+          <form onSubmit={handleShareSubmit}>
+            <DialogHeader>
+              <DialogTitle>Share {selectedFile?.name}</DialogTitle>
+              <DialogDescription>
+                Enter the wallet address to share this file with
+              </DialogDescription>
+            </DialogHeader>
+            <div className="py-4">
+              <Input
+                value={shareAddress}
+                onChange={(e) => setShareAddress(e.target.value)}
+                placeholder="0x..."
+                className="w-full"
+                autoFocus
+              />
+            </div>
+            <DialogFooter>
+              <Button 
+                variant="outline" 
+                type="button" 
+                onClick={() => {
+                  setIsShareDialogOpen(false);
+                  setShareAddress("");
+                  setSelectedFile(null);
+                }}
+              >
+                Cancel
+              </Button>
+              <Button type="submit">Share</Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
     </>
   );
 }
