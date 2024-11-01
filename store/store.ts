@@ -2,13 +2,15 @@ import { create } from "zustand";
 
 type FileType = "folder" | "text" | "image";
 
-interface File {
+export interface File {
   id: string;
   name: string;
   type: FileType;
   owner: string;
   lastModified: string;
   size: string;
+  starred?: boolean;
+  rootHash?: string;
 }
 
 interface FileSystemState {
@@ -57,7 +59,7 @@ export const useStore = create<FileSystemState>((set, get) => ({
   },
   currentPath: "/",
 
-  addFile: (file, path = get().currentPath) => {
+  addFile: (file: Omit<File, "id">, path = get().currentPath) => {
     set((state) => {
       const newFilesByPath = { ...state.filesByPath };
       if (!newFilesByPath[path]) {
@@ -86,6 +88,7 @@ export const useStore = create<FileSystemState>((set, get) => ({
           id: crypto.randomUUID(),
           name: fileName,
           type: getFileType(fileName),
+          rootHash: file.type === "folder" ? undefined : file.rootHash,
         },
       ];
       return { filesByPath: newFilesByPath };

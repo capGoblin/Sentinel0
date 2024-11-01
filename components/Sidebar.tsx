@@ -68,7 +68,7 @@ export default function Sidebar() {
         owner: "me",
         lastModified: new Date().toLocaleDateString(),
         size: formatFileSize(file.size),
-        // rootHash: rootHash, // Store the root hash for future reference
+        rootHash: rootHash, // Store the root hash for future reference
       });
 
       // Reset input
