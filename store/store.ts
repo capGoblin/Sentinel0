@@ -23,6 +23,8 @@ interface FileSystemState {
   getFilesAtPath: (path: string) => File[];
   isUploading: boolean;
   setUploading: (loading: boolean) => void;
+  toggleStarred: (fileId: string, path: string) => void;
+  getStarredFiles: () => File[];
 }
 
 const getFileType = (fileName: string): FileType => {
@@ -160,6 +162,28 @@ export const useStore = create<FileSystemState>((set, get) => ({
 
   isUploading: false,
   setUploading: (loading) => set({ isUploading: loading }),
+
+  toggleStarred: (fileId: string, path: string) => {
+    set((state) => {
+      const newFilesByPath = { ...state.filesByPath };
+      if (newFilesByPath[path]) {
+        newFilesByPath[path] = newFilesByPath[path].map(file => {
+          if (file.id === fileId) {
+            return { ...file, starred: !file.starred };
+          }
+          return file;
+        });
+      }
+      return { filesByPath: newFilesByPath };
+    });
+  },
+
+  getStarredFiles: () => {
+    const { filesByPath } = get();
+    return Object.values(filesByPath)
+      .flat()
+      .filter(file => file.starred);
+  },
 }));
 
 // Helper functions

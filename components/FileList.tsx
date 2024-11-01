@@ -41,9 +41,20 @@ import {
 import { Input } from "@/components/ui/input";
 
 export default function FileList() {
-  const { currentPath, setCurrentPath, getFilesAtPath, isUploading } =
-    useStore();
-  const files = getFilesAtPath(currentPath);
+  const { 
+    currentPath, 
+    setCurrentPath, 
+    getFilesAtPath, 
+    getStarredFiles,
+    toggleStarred,
+    isUploading 
+  } = useStore();
+  
+  // Get either starred files or regular files based on path
+  const files = currentPath === "/starred" 
+    ? getStarredFiles()
+    : getFilesAtPath(currentPath);
+
   const segments = getPathSegments(currentPath);
 
   const [isShareDialogOpen, setIsShareDialogOpen] = useState(false);
@@ -132,13 +143,12 @@ export default function FileList() {
   };
 
   const handleStar = (file: File) => {
-    // try {
-    //   const { toggleStarred } = useStore.getState();
-    //   toggleStarred(file.id, currentPath);
-    // } catch (error) {
-    //   console.error("Star operation failed:", error);
-    //   alert("Failed to star item. Please try again.");
-    // }
+    try {
+      toggleStarred(file.id, currentPath);
+    } catch (error) {
+      console.error("Star operation failed:", error);
+      alert("Failed to star item. Please try again.");
+    }
   };
 
   // const generateShareLink = async (file: File) => {
@@ -251,8 +261,10 @@ export default function FileList() {
                           <span>Share</span>
                         </DropdownMenuItem>
                         <DropdownMenuItem onSelect={() => handleStar(file)}>
-                          <Star className="mr-2 h-4 w-4" />
-                          <span>Star</span>
+                          <Star 
+                            className={`mr-2 h-4 w-4 ${file.starred ? "fill-current" : ""}`} 
+                          />
+                          <span>{file.starred ? "Unstar" : "Star"}</span>
                         </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
