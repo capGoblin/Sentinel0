@@ -9,6 +9,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   Folder,
   Image,
@@ -19,9 +20,9 @@ import {
 import { useStore, getParentPath, getPathSegments } from "@/store/store";
 import { Fragment } from "react";
 
-
 export default function FileList() {
-  const { currentPath, setCurrentPath, getFilesAtPath } = useStore();
+  const { currentPath, setCurrentPath, getFilesAtPath, isUploading } =
+    useStore();
   const files = getFilesAtPath(currentPath);
   const segments = getPathSegments(currentPath);
 
@@ -31,7 +32,28 @@ export default function FileList() {
     setCurrentPath(newPath);
   };
 
-  
+  const LoadingSkeleton = () => (
+    <TableRow>
+      <TableCell>
+        <div className="flex items-center gap-2">
+          <Skeleton className="h-4 w-4" />
+          <Skeleton className="h-4 w-[200px]" />
+        </div>
+      </TableCell>
+      <TableCell>
+        <Skeleton className="h-4 w-[100px]" />
+      </TableCell>
+      <TableCell>
+        <Skeleton className="h-4 w-[100px]" />
+      </TableCell>
+      <TableCell>
+        <Skeleton className="h-4 w-[50px]" />
+      </TableCell>
+      <TableCell>
+        <Skeleton className="h-8 w-8 rounded-full" />
+      </TableCell>
+    </TableRow>
+  );
 
   return (
     <>
@@ -55,7 +77,8 @@ export default function FileList() {
                   variant="ghost"
                   size="sm"
                   onClick={() => {
-                    const newPath = "/" + segments.slice(0, index + 1).join("/");
+                    const newPath =
+                      "/" + segments.slice(0, index + 1).join("/");
                     setCurrentPath(newPath);
                   }}
                 >
@@ -103,6 +126,13 @@ export default function FileList() {
                 </TableCell>
               </TableRow>
             ))}
+            {isUploading && (
+              <>
+                <LoadingSkeleton />
+                {/* <LoadingSkeleton /> */}
+                {/* <LoadingSkeleton /> */}
+              </>
+            )}
           </TableBody>
         </Table>
       </div>

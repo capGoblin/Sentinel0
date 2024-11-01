@@ -40,6 +40,9 @@ export default function Sidebar() {
     if (!file) return;
 
     try {
+      const { setUploading } = useStore.getState();
+      setUploading(true);
+
       // First upload the file to 0g storage
       const rootHash = await uploadFile(file);
       console.log("File uploaded with root hash:", rootHash);
@@ -58,17 +61,10 @@ export default function Sidebar() {
       // );
       // console.log("Query result:", query_tx);
 
-      // Determine file type
-      const fileType: "text" | "image" = file.type.startsWith("image/")
-        ? "image"
-        : "text";
-
       // Create file entry with additional metadata
-      console.log(file.name);
-      console.log(currentPath);
       addFile({
         name: file.name,
-        type: fileType,
+        type: file.type.startsWith("image/") ? "image" : "text",
         owner: "me",
         lastModified: new Date().toLocaleDateString(),
         size: formatFileSize(file.size),
@@ -81,8 +77,10 @@ export default function Sidebar() {
       }
     } catch (error) {
       console.error("Error uploading file:", error);
-      // You might want to add some error handling UI here
       alert("Failed to upload file. Please try again.");
+    } finally {
+      const { setUploading } = useStore.getState();
+      setUploading(false);
     }
   };
 

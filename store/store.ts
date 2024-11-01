@@ -19,6 +19,8 @@ interface FileSystemState {
   deleteFile: (name: string, path?: string) => void;
   setCurrentPath: (path: string) => void;
   getFilesAtPath: (path: string) => File[];
+  isUploading: boolean;
+  setUploading: (loading: boolean) => void;
 }
 
 const getFileType = (fileName: string): FileType => {
@@ -152,6 +154,9 @@ export const useStore = create<FileSystemState>((set, get) => ({
   getFilesAtPath: (path) => {
     return get().filesByPath[path] || [];
   },
+
+  isUploading: false,
+  setUploading: (loading) => set({ isUploading: loading }),
 }));
 
 // Helper functions
