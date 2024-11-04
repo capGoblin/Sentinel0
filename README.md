@@ -1,4 +1,4 @@
-# Super cost-effective and super secure digital storage
+# Sentinel0 - Super cost-effective and super secure digital storage
 
 ## What?
 
