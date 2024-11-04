@@ -1,4 +1,4 @@
-# Decentralized Google Drive Alternative
+# Super cost-effective and super secure digital storage
 
 ## What?
 
