@@ -4,6 +4,8 @@ import { NextResponse } from 'next/server';
 import { unlink, readFile, writeFile } from 'fs/promises';
 import { join } from 'path';
 import os from 'os';
+import { config } from 'dotenv';
+config();
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
@@ -34,7 +36,7 @@ export async function GET(request: Request) {
 
 async function downloadFromStorage(rootHash: string, fileName: string) {
   const evmRpc = "https://16600.rpc.thirdweb.com/";
-  const privateKey = "02a54cdd4ace57710f864a8e63eeca0ae82cc05dbfd125be94c11c0c804b5462";
+  const privateKey = process.env.PRIVATE_KEY!;
   const flowAddr = "0x0460aA47b41a66694c0a73f667a1b795A5ED3556";
   const indRpc = "https://indexer-storage-testnet-standard.0g.ai";
 

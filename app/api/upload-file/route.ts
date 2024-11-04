@@ -1,6 +1,8 @@
 import { getFlowContract, Blob, Indexer } from '@0glabs/0g-ts-sdk';
 import { ethers } from 'ethers';
 import { NextResponse } from 'next/server';
+import { config } from 'dotenv';
+config();
 
 export async function POST(request: Request) {
   const formData = await request.formData();
@@ -20,7 +22,7 @@ export async function POST(request: Request) {
 // Implement your file upload logic here
 async function uploadToStorage(fileObj: File) {
     const evmRpc = "https://16600.rpc.thirdweb.com/";
-    const privateKey = "02a54cdd4ace57710f864a8e63eeca0ae82cc05dbfd125be94c11c0c804b5462";
+    const privateKey = process.env.PRIVATE_KEY!;
     const flowAddr = "0x0460aA47b41a66694c0a73f667a1b795A5ED3556";
     const indRpc = "https://indexer-storage-testnet-standard.0g.ai";
   

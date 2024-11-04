@@ -24,6 +24,7 @@
     "@solar-republic/neutrino": "^1.2.4",
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.1.1",
+    "dotenv": "^16.4.5",
     "ethers": "^6.13.4",
     "ethers-v5": "npm:ethers@5.7.2",
     "lucide-react": "^0.454.0",
