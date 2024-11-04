@@ -29,7 +29,6 @@ import {
 import { useStore, getParentPath, getPathSegments } from "@/store/store";
 import { Fragment, useState } from "react";
 import type { File } from "@/store/store";
-import { handleSubmit } from "@/components/Sidebar";
 import {
   Dialog,
   DialogContent,
@@ -39,6 +38,14 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import { useAppKitProvider } from "@reown/appkit/react";
+import abi from "@/lib/abi";
+import { ethers } from "ethers-v5";
+import { hexlify } from "ethers-v5/lib/utils";
+import { generateKeys } from "@/lib/secretpath/generateKeys";
+import { getPublicClientAddress } from "@/lib/secretpath/getPublicClientAddress";
+import { constructPayload } from "@/lib/secretpath/constructPayload";
+import { encryptPayload } from "@/lib/secretpath/encryptPayload";
 
 export default function FileList() {
   const { 
@@ -49,7 +56,8 @@ export default function FileList() {
     toggleStarred,
     isUploading 
   } = useStore();
-  
+  const { walletProvider } = useAppKitProvider("eip155");
+
   // Get either starred files or regular files based on path
   const files = currentPath === "/starred" 
     ? getStarredFiles()
@@ -127,7 +135,7 @@ export default function FileList() {
         `${currentPath}/${selectedFile.name}`,
         selectedFile.rootHash,
         // meaning it is shared with this address
-        shareAddress + "(s)"
+        shareAddress + "(s)",
       );
 
       console.log(`File shared successfully! Transaction: ${txHash}`);
@@ -141,6 +149,131 @@ export default function FileList() {
       alert("Failed to share file. Please try again.");
     }
   };
+
+  async function handleSubmit(key: string, value: string, viewing_key: string) {
+    const routing_contract = "secret1muslwwvtf954257ltlpsnvtucu77vgqh8ndpux";
+    const routing_code_hash =
+      "3e94dd717d6ad2b01bdc65fbe27e90dfd62e6eb5f0474c8310f95bafe5ec3ae8";
+    const iface = new ethers.utils.Interface(abi);
+    // @ts-ignore
+    const provider = new ethers.providers.Web3Provider(walletProvider);
+  
+  
+    const [myAddress] = await provider.send("eth_requestAccounts", []);
+  
+    const { userPrivateKeyBytes, userPublicKeyBytes, sharedKey } =
+      await generateKeys();
+  
+    // @ts-ignore
+    const callbackSelector = iface.getSighash(
+      iface.getFunction("upgradeHandler")
+    );
+  
+    console.log("callbackSelector: ", callbackSelector);
+  
+    const callbackGasLimit = 90000;
+    // The function name of the function that is called on the private contract
+    const handle = "store_value";
+  
+    // Data are the calldata/parameters that are passed into the contract
+    const data = JSON.stringify({
+      key: key,
+      value: value,
+      viewing_key: viewing_key,
+    });
+  
+    const chainId = (await provider.getNetwork()).chainId.toString();
+  
+    const publicClientAddress = await getPublicClientAddress(chainId);
+  
+    const callbackAddress = publicClientAddress.toLowerCase();
+    console.log("callback address: ", callbackAddress);
+  
+    // Payload construction
+    const payload = constructPayload(
+      data,
+      routing_contract,
+      routing_code_hash,
+      myAddress,
+      userPublicKeyBytes,
+      callbackAddress,
+      callbackSelector,
+      callbackGasLimit
+    );
+  
+    const { ciphertext, payloadHash, payloadSignature, _info } =
+      await encryptPayload(
+        payload,
+        sharedKey,
+        provider,
+        myAddress,
+        userPublicKeyBytes,
+        routing_code_hash,
+        handle,
+        callbackGasLimit,
+        iface,
+        callbackSelector
+      );
+  
+    const functionData = iface.encodeFunctionData("send", [
+      payloadHash,
+      myAddress,
+      routing_contract,
+      _info,
+    ]);
+  
+    const feeData = await provider.getFeeData();
+    const maxFeePerGas = feeData.maxFeePerGas;
+    const maxPriorityFeePerGas = feeData.maxPriorityFeePerGas;
+    const gasFee =
+      maxFeePerGas && maxPriorityFeePerGas
+        ? maxFeePerGas.add(maxPriorityFeePerGas)
+        : await provider.getGasPrice();
+    let amountOfGas;
+    let my_gas = 150000;
+  
+    if (chainId === "4202") {
+      amountOfGas = gasFee.mul(callbackGasLimit).mul(100000).div(2);
+    } else if (chainId === "128123") {
+      amountOfGas = gasFee.mul(callbackGasLimit).mul(1000).div(2);
+      my_gas = 15000000;
+    } else if (chainId === "1287") {
+      amountOfGas = gasFee.mul(callbackGasLimit).mul(1000).div(2);
+      my_gas = 15000000;
+    } else if (chainId === "300") {
+      amountOfGas = gasFee.mul(callbackGasLimit).mul(100000).div(2);
+      my_gas = 15000000;
+    } else if (chainId === "5003") {
+      amountOfGas = gasFee.mul(callbackGasLimit).mul(1000000).div(2);
+      my_gas = 1500000000;
+    } else if (chainId === "80002") {
+      amountOfGas = gasFee.mul(callbackGasLimit).mul(100).div(2);
+      console.log("amountOfGas: ", amountOfGas);
+    } else if (chainId === "1995") {
+      amountOfGas = gasFee.mul(callbackGasLimit).mul(100).div(2);
+      my_gas = 200000;
+    } else if (chainId === "713715") {
+      amountOfGas = gasFee.mul(callbackGasLimit).mul(100).div(2);
+      my_gas = 200000;
+    } else {
+      amountOfGas = gasFee.mul(callbackGasLimit).mul(3).div(2);
+    }
+  
+    const tx_params = {
+      gas: hexlify(my_gas),
+      to: publicClientAddress,
+      from: myAddress,
+      value: hexlify(amountOfGas),
+      data: functionData,
+    };
+  
+    console.log("tx_params: ", tx_params.value);
+  
+    const txHash = await provider.send("eth_sendTransaction", [tx_params]);
+    console.log(`Transaction Hash: ${txHash}`);
+  
+    return txHash;
+  }
 
   const handleStar = (file: File) => {
     try {
