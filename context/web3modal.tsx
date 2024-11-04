@@ -2,7 +2,7 @@
 
 "use client";
 
-import { createAppKit } from "@reown/appkit/react";
+import { createAppKit, useAppKitTheme } from "@reown/appkit/react";
 import { EthersAdapter } from "@reown/appkit-adapter-ethers";
 import {
   sepolia,
@@ -76,5 +76,7 @@ createAppKit({
 });
 
 export function AppKit({ children }: any) {
+  const { themeMode, themeVariables, setThemeMode, setThemeVariables } = useAppKitTheme()
+  setThemeMode('light')
   return children;
 }
