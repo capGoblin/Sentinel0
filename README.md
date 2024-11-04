@@ -1,4 +1,4 @@
-# Sentinel0 - Super cost-effective and super secure digital storage
+# Sentinel0 - Your Super secure and lightweight digital storage.
 
 ## What?
 
