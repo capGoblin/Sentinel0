@@ -5,16 +5,7 @@
 We’ve developed a decentralized Google Drive alternative—one that takes data security and privacy to the next level. Using **0G Storage** for decentralized file management and **Secret Network** for privacy, our app securely stores user files in a decentralized format, allowing users to share, access, and control their data with full ownership. Each file’s integrity is maintained by generating a unique root hash, which is encrypted and securely stored in the Secret Network, ensuring that only authorized addresses can access it. Additionally, **SecretPath** facilitates the seamless transfer of encrypted data **from any EVM chains to the Secret Network**. This means users get all the benefits of decentralized storage with privacy that’s typically missing in Web3 solutions.
 
 
-
-
 https://github.com/user-attachments/assets/94050f69-2018-40c8-a852-a9e2b7daee31
-
-
-## Why We Built It with 0G Storage and Secret Network 
-
-We chose **0G Storage** for its high scalability, cost efficiency, and optimized performance for data-heavy dApps. Unlike Web2 services like Google Drive or Web3 alternatives like IPFS, **0G Storage** ensures infinite scalability and real-time data retrieval while remaining highly affordable. This makes it the ideal choice for users who want decentralized control without sacrificing speed or reliability.
-
-**Secret Network** brings in the critical privacy layer. By encrypting file root hashes and storing them on-chain, only users with the correct viewing key (e.g., those you’ve shared with) can decrypt and view file information. This integration of privacy ensures that user data isn’t just stored on-chain—it’s stored safely, out of reach of unauthorized eyes, creating a truly decentralized, private Google Drive experience.
 
 ## What is 0G Storage?
 
@@ -24,6 +15,14 @@ We chose **0G Storage** for its high scalability, cost efficiency, and optimized
 - **Redundancy and Integrity**: Employs erasure coding and consensus for redundancy, safeguarding data against failures.
 - **Cost Efficiency**: Uses a flexible pricing model to keep storage affordable, making it ideal for long-term data-heavy applications.
 - **Privacy Compatibility**: Integrates seamlessly with privacy networks like Secret Network, enhancing data confidentiality and user privacy.
+
+
+## Why Built It with 0G Storage and Secret Network 
+
+We chose **0G Storage** for its high scalability, cost efficiency, and optimized performance for data-heavy dApps. Unlike Web2 services like Google Drive or Web3 alternatives like IPFS, **0G Storage** ensures infinite scalability and real-time data retrieval while remaining highly affordable. This makes it the ideal choice for users who want decentralized control without sacrificing speed or reliability.
+
+**Secret Network** brings in the critical privacy layer. By encrypting file root hashes and storing them on-chain, only users with the correct viewing key (e.g., those you’ve shared with) can decrypt and view file information. This integration of privacy ensures that user data isn’t just stored on-chain—it’s stored safely, out of reach of unauthorized eyes, creating a truly decentralized, private Google Drive experience.
+
 
 ## Why 0G Outshines Competitors
 
