@@ -13,7 +13,7 @@ https://github.com/user-attachments/assets/94050f69-2018-40c8-a852-a9e2b7daee31
 
 Compared to competitors, 0G excels in scalability, cost efficiency, and data availability. While Filecoin and Arweave are optimized for unstructured data, 0G supports both structured and unstructured data, enabling use cases in complex AI workflows and large databases. Its integrated data availability layer ensures ultra-fast access, making it the preferred choice for high-performance decentralized applications.
 
-## What is Secret Network ?
+## What is Secret Network?
 
 **Secret Network** is a privacy-focused blockchain platform that enhances data confidentiality for decentralized applications by integrating encryption directly into its core. This ensures that only authorized users can access sensitive information, providing a level of data security unmatched by traditional and many Web3 solutions.
 
