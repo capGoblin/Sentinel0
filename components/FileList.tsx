@@ -357,7 +357,7 @@ export default function FileList() {
                     {file.type === "folder" ? (
                       <Folder className="h-4 w-4" />
                     ) : file.type === "image" ? (
-                      <Image className="h-4 w-4" alt="File preview" />
+                      <Image className="h-4 w-4" />
                     ) : (
                       <FileText className="h-4 w-4" />
                     )}
