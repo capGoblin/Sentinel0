@@ -158,7 +158,6 @@ export default function FileList() {
 
     const { userPublicKeyBytes, sharedKey } = await generateKeys();
 
-    // @ts-expect-error Interface method type mismatch with ethers types
     const callbackSelector = iface.getSighash(
       iface.getFunction("upgradeHandler")
     );
