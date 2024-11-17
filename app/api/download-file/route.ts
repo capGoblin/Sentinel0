@@ -1,5 +1,4 @@
 import { Indexer } from "@0glabs/0g-ts-sdk";
-import { ethers } from "ethers";
 import { NextResponse } from "next/server";
 import { unlink, readFile } from "fs/promises";
 import { join } from "path";

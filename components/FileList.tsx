@@ -1,11 +1,6 @@
 "use client";
 
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableRow,
-} from "@/components/ui/table";
+import { Table, TableBody, TableCell, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
@@ -13,7 +8,7 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
+} from "@/components/ui/dropdown-menu";
 import {
   Folder,
   Image,
@@ -46,20 +41,21 @@ import { constructPayload } from "@/lib/secretpath/constructPayload";
 import { encryptPayload } from "@/lib/secretpath/encryptPayload";
 
 export default function FileList() {
-  const { 
-    currentPath, 
-    setCurrentPath, 
-    getFilesAtPath, 
+  const {
+    currentPath,
+    setCurrentPath,
+    getFilesAtPath,
     getStarredFiles,
     toggleStarred,
-    isUploading 
+    isUploading,
   } = useStore();
   const { walletProvider } = useAppKitProvider("eip155");
 
   // Get either starred files or regular files based on path
-  const files = currentPath === "/starred" 
-    ? getStarredFiles()
-    : getFilesAtPath(currentPath);
+  const files =
+    currentPath === "/starred"
+      ? getStarredFiles()
+      : getFilesAtPath(currentPath);
 
   const segments = getPathSegments(currentPath);
 
@@ -85,24 +81,26 @@ export default function FileList() {
       }
 
       const response = await fetch(
-        `/api/download-file?rootHash=${file.rootHash}&fileName=${encodeURIComponent(file.name)}`
+        `/api/download-file?rootHash=${
+          file.rootHash
+        }&fileName=${encodeURIComponent(file.name)}`
       );
-      
+
       if (!response.ok) {
-        throw new Error('Download failed');
+        throw new Error("Download failed");
       }
 
       // Get the blob from the response
       const blob = await response.blob();
-      
+
       // Create a download link
       const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
+      const a = document.createElement("a");
       a.href = url;
       a.download = file.name;
       document.body.appendChild(a);
       a.click();
-      
+
       // Cleanup
       window.URL.revokeObjectURL(url);
       document.body.removeChild(a);
@@ -123,7 +121,7 @@ export default function FileList() {
 
   const handleShareSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     try {
       if (!selectedFile?.rootHash) {
         throw new Error("No root hash found for file");
@@ -133,11 +131,11 @@ export default function FileList() {
         `${currentPath}/${selectedFile.name}`,
         selectedFile.rootHash,
         // meaning it is shared with this address
-        shareAddress + "(s)",
+        shareAddress + "(s)"
       );
 
       console.log(`File shared successfully! Transaction: ${txHash}`);
-      
+
       // Reset form
       setShareAddress("");
       setSelectedFile(null);
@@ -155,38 +153,36 @@ export default function FileList() {
     const iface = new ethers.utils.Interface(abi);
     // @ts-expect-error Web3Provider type mismatch with walletProvider
     const provider = new ethers.providers.Web3Provider(walletProvider);
-  
-  
+
     const [myAddress] = await provider.send("eth_requestAccounts", []);
-  
-    const { userPrivateKeyBytes, userPublicKeyBytes, sharedKey } =
-      await generateKeys();
-  
+
+    const { userPublicKeyBytes, sharedKey } = await generateKeys();
+
     // @ts-expect-error Interface method type mismatch with ethers types
     const callbackSelector = iface.getSighash(
       iface.getFunction("upgradeHandler")
     );
-  
+
     console.log("callbackSelector: ", callbackSelector);
-  
+
     const callbackGasLimit = 90000;
     // The function name of the function that is called on the private contract
     const handle = "store_value";
-  
+
     // Data are the calldata/parameters that are passed into the contract
     const data = JSON.stringify({
       key: key,
       value: value,
       viewing_key: viewing_key,
     });
-  
+
     const chainId = (await provider.getNetwork()).chainId.toString();
-  
+
     const publicClientAddress = await getPublicClientAddress(chainId);
-  
+
     const callbackAddress = publicClientAddress.toLowerCase();
     console.log("callback address: ", callbackAddress);
-  
+
     // Payload construction
     const payload = constructPayload(
       data,
@@ -198,7 +194,7 @@ export default function FileList() {
       callbackSelector,
       callbackGasLimit
     );
-  
+
     const { payloadHash, _info } = await encryptPayload(
       payload,
       sharedKey,
@@ -207,16 +203,16 @@ export default function FileList() {
       userPublicKeyBytes,
       routing_code_hash,
       handle,
-      callbackGasLimit,
+      callbackGasLimit
     );
-  
+
     const functionData = iface.encodeFunctionData("send", [
       payloadHash,
       myAddress,
       routing_contract,
       _info,
     ]);
-  
+
     const feeData = await provider.getFeeData();
     const maxFeePerGas = feeData.maxFeePerGas;
     const maxPriorityFeePerGas = feeData.maxPriorityFeePerGas;
@@ -226,7 +222,7 @@ export default function FileList() {
         : await provider.getGasPrice();
     let amountOfGas;
     let my_gas = 150000;
-  
+
     if (chainId === "4202") {
       amountOfGas = gasFee.mul(callbackGasLimit).mul(100000).div(2);
     } else if (chainId === "128123") {
@@ -253,7 +249,7 @@ export default function FileList() {
     } else {
       amountOfGas = gasFee.mul(callbackGasLimit).mul(3).div(2);
     }
-  
+
     const tx_params = {
       gas: hexlify(my_gas),
       to: publicClientAddress,
@@ -261,12 +257,12 @@ export default function FileList() {
       value: hexlify(amountOfGas),
       data: functionData,
     };
-  
+
     console.log("tx_params: ", tx_params.value);
-  
+
     const txHash = await provider.send("eth_sendTransaction", [tx_params]);
     console.log(`Transaction Hash: ${txHash}`);
-  
+
     return txHash;
   }
 
@@ -362,7 +358,7 @@ export default function FileList() {
                     {file.type === "folder" ? (
                       <Folder className="h-4 w-4" />
                     ) : file.type === "image" ? (
-                      <Image className="h-4 w-4"/>
+                      <Image className="h-4 w-4" alt="File preview" />
                     ) : (
                       <FileText className="h-4 w-4" />
                     )}
@@ -373,29 +369,31 @@ export default function FileList() {
                 <TableCell>{file.lastModified}</TableCell>
                 <TableCell>{file.size}</TableCell>
                 <TableCell>
-                <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="icon">
-                          <MoreVertical className="h-4 w-4" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuItem onSelect={() => handleDownload(file)}>
-                          <Download className="mr-2 h-4 w-4" />
-                          <span>Download</span>
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onSelect={() => handleShare(file)}>
-                          <Share2 className="mr-2 h-4 w-4" />
-                          <span>Share</span>
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onSelect={() => handleStar(file)}>
-                          <Star 
-                            className={`mr-2 h-4 w-4 ${file.starred ? "fill-current" : ""}`} 
-                          />
-                          <span>{file.starred ? "Unstar" : "Star"}</span>
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" size="icon">
+                        <MoreVertical className="h-4 w-4" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuItem onSelect={() => handleDownload(file)}>
+                        <Download className="mr-2 h-4 w-4" />
+                        <span>Download</span>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onSelect={() => handleShare(file)}>
+                        <Share2 className="mr-2 h-4 w-4" />
+                        <span>Share</span>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onSelect={() => handleStar(file)}>
+                        <Star
+                          className={`mr-2 h-4 w-4 ${
+                            file.starred ? "fill-current" : ""
+                          }`}
+                        />
+                        <span>{file.starred ? "Unstar" : "Star"}</span>
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
                 </TableCell>
               </TableRow>
             ))}
@@ -429,9 +427,9 @@ export default function FileList() {
               />
             </div>
             <DialogFooter>
-              <Button 
-                variant="outline" 
-                type="button" 
+              <Button
+                variant="outline"
+                type="button"
                 onClick={() => {
                   setIsShareDialogOpen(false);
                   setShareAddress("");
