@@ -24,8 +24,7 @@ export default function Sidebar() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [showNewFolderDialog, setShowNewFolderDialog] = useState(false);
   const { addFile, addFolder, setCurrentPath, currentPath } = useStore();
-  const [sharedHash, setSharedHash] = useState<string>("");
-  const { address, caipAddress, isConnected } = useAppKitAccount();
+  const { address } = useAppKitAccount();
   const { walletProvider } = useAppKitProvider("eip155");
 
   const handleCreateFolder = (name: string) => {
@@ -93,78 +92,86 @@ export default function Sidebar() {
       const { setUploading } = useStore.getState();
       setUploading(true);
 
-      const query_tx = await handleKeysQuery(
-        address!
-      );
-      // @ts-ignore
-      const rootHash: string = await handleQuery(query_tx.keys, address!)
+      const query_tx = await handleKeysQuery(address!);
+
+      // @ts-expect-error Query response type mismatch
+      const rootHash: string = await handleQuery(query_tx.keys, address!);
       console.log("Query result:", rootHash);
 
-      
+      // @ts-expect-error File type inference issue
+      const fileName = query_tx.keys;
+      // @ts-expect-error File type property access
+      const fileType = query_tx.keys.type?.startsWith("image/")
+        ? "image"
+        : "text";
+
       addFile({
-        // @ts-ignore
-        name: query_tx.keys,
-        // @ts-ignore
-        type: query_tx.keys.type.startsWith("image/") ? "image" : "text",
+        name: fileName,
+        type: fileType,
         owner: "me",
         lastModified: new Date().toLocaleDateString(),
         size: formatFileSize(0),
-        rootHash: rootHash, // Store the root hash for future reference
+        rootHash: rootHash,
       });
-      
+
       setUploading(false);
     };
-    querySharedHash();
-  }, []);
+
+    if (address) {
+      querySharedHash();
+    }
+  }, [address, addFile]);
 
   useEffect(() => {
-    if (currentPath === "/shared") return;
+    if (currentPath === "/shared" || !address) return;
 
     const querySharedHash = async () => {
       const { setUploading } = useStore.getState();
       setUploading(true);
 
-      const query_tx = await handleKeysQuery(
-        address! + "(s)"
-      );
-      // @ts-ignore
-      const sharedHash: string = await handleQuery(query_tx.keys, address! + "(s)")
-      console.log("Query result:", sharedHash);
-      setSharedHash(sharedHash)
+      const query_tx = await handleKeysQuery(`${address}(s)`);
 
-      
+      const sharedHash = (await handleQuery(
+        (query_tx as { keys: string }).keys,
+        `${address}(s)`
+      )) as string;
+      console.log("Query result:", sharedHash);
+
+      // @ts-expect-error File type inference issue
+      const fileName = query_tx.keys;
+      // @ts-expect-error File type property access
+      const fileType = query_tx.keys.type?.startsWith("image/")
+        ? "image"
+        : "text";
+
       addFile({
-        // @ts-ignore
-        name: query_tx.keys,
-        // @ts-ignore
-        type: query_tx.keys.type.startsWith("image/") ? "image" : "text",
+        name: fileName,
+        type: fileType,
         owner: "me",
         lastModified: new Date().toLocaleDateString(),
         size: formatFileSize(0),
-        rootHash: sharedHash, // Store the root hash for future reference
+        rootHash: sharedHash,
       });
-      
+
       setUploading(false);
     };
-    querySharedHash();
 
-    // console.log("Query result:", query_tx);
-  }, [currentPath]);
+    querySharedHash();
+  }, [currentPath, address, addFile]);
 
   async function handleSubmit(key: string, value: string, viewing_key: string) {
     const routing_contract = "secret1muslwwvtf954257ltlpsnvtucu77vgqh8ndpux";
     const routing_code_hash =
       "3e94dd717d6ad2b01bdc65fbe27e90dfd62e6eb5f0474c8310f95bafe5ec3ae8";
     const iface = new ethers.utils.Interface(abi);
-    // @ts-ignore
+    // @ts-expect-error Web3Provider type mismatch
     const provider = new ethers.providers.Web3Provider(walletProvider);
 
     const [myAddress] = await provider.send("eth_requestAccounts", []);
 
-    const { userPrivateKeyBytes, userPublicKeyBytes, sharedKey } =
-      await generateKeys();
+    const { userPublicKeyBytes, sharedKey } = await generateKeys();
 
-    // @ts-ignore
+    // @ts-expect-error Interface method type mismatch
     const callbackSelector = iface.getSighash(
       iface.getFunction("upgradeHandler")
     );
@@ -201,19 +208,16 @@ export default function Sidebar() {
       callbackGasLimit
     );
 
-    const { ciphertext, payloadHash, payloadSignature, _info } =
-      await encryptPayload(
-        payload,
-        sharedKey,
-        provider,
-        myAddress,
-        userPublicKeyBytes,
-        routing_code_hash,
-        handle,
-        callbackGasLimit,
-        iface,
-        callbackSelector
-      );
+    const { payloadHash, _info } = await encryptPayload(
+      payload,
+      sharedKey,
+      provider,
+      myAddress,
+      userPublicKeyBytes,
+      routing_code_hash,
+      handle,
+      callbackGasLimit
+    );
 
     const functionData = iface.encodeFunctionData("send", [
       payloadHash,
@@ -437,127 +441,123 @@ export async function handleSubmit(
   key: string,
   value: string,
   viewing_key: string,
-  walletProvider: any
+  walletProvider: unknown
 ) {
   const routing_contract = "secret1j0gpu6tlwnc9fw55wcfsfuml00kqpcnqz7dck7";
   const routing_code_hash =
     "6311a3f85261fc720d9a61e4ee46fae1c8a23440122b2ed1bbcebf49e3e46ad2";
   const iface = new ethers.utils.Interface(abi);
-  // @ts-ignore
+  // @ts-expect-error Web3Provider type mismatch
   const provider = new ethers.providers.Web3Provider(walletProvider);
 
-    const [myAddress] = await provider.send("eth_requestAccounts", []);
+  const [myAddress] = await provider.send("eth_requestAccounts", []);
 
-    const { userPrivateKeyBytes, userPublicKeyBytes, sharedKey } =
-      await generateKeys();
+  const { userPublicKeyBytes, sharedKey } = await generateKeys();
 
-    // @ts-ignore
-    const callbackSelector = iface.getSighash(
-      iface.getFunction("upgradeHandler")
-    );
+  // @ts-expect-error Interface method type mismatch
+  const callbackSelector = iface.getSighash(
+    iface.getFunction("upgradeHandler")
+  );
 
-    console.log("callbackSelector: ", callbackSelector);
+  console.log("callbackSelector: ", callbackSelector);
 
-    const callbackGasLimit = 90000;
-    // The function name of the function that is called on the private contract
-    const handle = "store_value";
+  const callbackGasLimit = 90000;
+  // The function name of the function that is called on the private contract
+  const handle = "store_value";
 
-    // Data are the calldata/parameters that are passed into the contract
-    const data = JSON.stringify({
-      key: key,
-      value: value,
-      viewing_key: viewing_key,
-    });
+  // Data are the calldata/parameters that are passed into the contract
+  const data = JSON.stringify({
+    key: key,
+    value: value,
+    viewing_key: viewing_key,
+  });
 
-    const chainId = (await provider.getNetwork()).chainId.toString();
+  const chainId = (await provider.getNetwork()).chainId.toString();
 
-    const publicClientAddress = await getPublicClientAddress(chainId);
+  const publicClientAddress = await getPublicClientAddress(chainId);
 
-    const callbackAddress = publicClientAddress.toLowerCase();
-    console.log("callback address: ", callbackAddress);
+  const callbackAddress = publicClientAddress.toLowerCase();
+  console.log("callback address: ", callbackAddress);
 
-    // Payload construction
-    const payload = constructPayload(
-      data,
-      routing_contract,
-      routing_code_hash,
-      myAddress,
-      userPublicKeyBytes,
-      callbackAddress,
-      callbackSelector,
-      callbackGasLimit
-    );
+  // Payload construction
+  const payload = constructPayload(
+    data,
+    routing_contract,
+    routing_code_hash,
+    myAddress,
+    userPublicKeyBytes,
+    callbackAddress,
+    callbackSelector,
+    callbackGasLimit
+  );
 
-    const { ciphertext, payloadHash, payloadSignature, _info } =
-      await encryptPayload(
-        payload,
-        sharedKey,
-        provider,
-        myAddress,
-        userPublicKeyBytes,
-        routing_code_hash,
-        handle,
-        callbackGasLimit,
-        iface,
-        callbackSelector
-      );
+  const { payloadHash, _info } = await encryptPayload(
+    payload,
+    sharedKey,
+    provider,
+    myAddress,
+    userPublicKeyBytes,
+    routing_code_hash,
+    handle,
+    callbackGasLimit
+  );
 
-    const functionData = iface.encodeFunctionData("send", [
-      payloadHash,
-      myAddress,
-      routing_contract,
-      _info,
-    ]);
+  const functionData = iface.encodeFunctionData("send", [
+    payloadHash,
+    myAddress,
+    routing_contract,
+    _info,
+  ]);
 
-    const feeData = await provider.getFeeData();
-    const maxFeePerGas = feeData.maxFeePerGas;
-    const maxPriorityFeePerGas = feeData.maxPriorityFeePerGas;
-    const gasFee =
-      maxFeePerGas && maxPriorityFeePerGas
-        ? maxFeePerGas.add(maxPriorityFeePerGas)
-        : await provider.getGasPrice();
-    let amountOfGas;
-    let my_gas = 150000;
+  const feeData = await provider.getFeeData();
+  const maxFeePerGas = feeData.maxFeePerGas;
+  const maxPriorityFeePerGas = feeData.maxPriorityFeePerGas;
+  const gasFee =
+    maxFeePerGas && maxPriorityFeePerGas
+      ? maxFeePerGas.add(maxPriorityFeePerGas)
+      : await provider.getGasPrice();
+  let amountOfGas;
+  let my_gas = 150000;
 
-    if (chainId === "4202") {
-      amountOfGas = gasFee.mul(callbackGasLimit).mul(100000).div(2);
-    } else if (chainId === "128123") {
-      amountOfGas = gasFee.mul(callbackGasLimit).mul(1000).div(2);
-      my_gas = 15000000;
-    } else if (chainId === "1287") {
-      amountOfGas = gasFee.mul(callbackGasLimit).mul(1000).div(2);
-      my_gas = 15000000;
-    } else if (chainId === "300") {
-      amountOfGas = gasFee.mul(callbackGasLimit).mul(100000).div(2);
-      my_gas = 15000000;
-    } else if (chainId === "5003") {
-      amountOfGas = gasFee.mul(callbackGasLimit).mul(1000000).div(2);
-      my_gas = 1500000000;
-    } else if (chainId === "80002") {
-      amountOfGas = gasFee.mul(callbackGasLimit).mul(100).div(2);
-      console.log("amountOfGas: ", amountOfGas);
-    } else if (chainId === "1995") {
-      amountOfGas = gasFee.mul(callbackGasLimit).mul(100).div(2);
-      my_gas = 200000;
-    } else if (chainId === "713715") {
-      amountOfGas = gasFee.mul(callbackGasLimit).mul(100).div(2);
-      my_gas = 200000;
-    } else {
-      amountOfGas = gasFee.mul(callbackGasLimit).mul(3).div(2);
-    }
+  if (chainId === "4202") {
+    amountOfGas = gasFee.mul(callbackGasLimit).mul(100000).div(2);
+  } else if (chainId === "128123") {
+    amountOfGas = gasFee.mul(callbackGasLimit).mul(1000).div(2);
+    my_gas = 15000000;
+  } else if (chainId === "1287") {
+    amountOfGas = gasFee.mul(callbackGasLimit).mul(1000).div(2);
+    my_gas = 15000000;
+  } else if (chainId === "300") {
+    amountOfGas = gasFee.mul(callbackGasLimit).mul(100000).div(2);
+    my_gas = 15000000;
+  } else if (chainId === "5003") {
+    amountOfGas = gasFee.mul(callbackGasLimit).mul(1000000).div(2);
+    my_gas = 1500000000;
+  } else if (chainId === "80002") {
+    amountOfGas = gasFee.mul(callbackGasLimit).mul(100).div(2);
+    console.log("amountOfGas: ", amountOfGas);
+  } else if (chainId === "1995") {
+    amountOfGas = gasFee.mul(callbackGasLimit).mul(100).div(2);
+    my_gas = 200000;
+  } else if (chainId === "713715") {
+    amountOfGas = gasFee.mul(callbackGasLimit).mul(100).div(2);
+    my_gas = 200000;
+  } else {
+    amountOfGas = gasFee.mul(callbackGasLimit).mul(3).div(2);
+  }
 
-    const tx_params = {
-      gas: hexlify(my_gas),
-      to: publicClientAddress,
-      from: myAddress,
-      value: hexlify(amountOfGas),
-      data: functionData,
-    };
+  const tx_params = {
+    gas: hexlify(my_gas),
+    to: publicClientAddress,
+    from: myAddress,
+    value: hexlify(amountOfGas),
+    data: functionData,
+  };
 
-    console.log("tx_params: ", tx_params.value);
+  console.log("tx_params: ", tx_params.value);
 
-    const txHash = await provider.send("eth_sendTransaction", [tx_params]);
-    console.log(`Transaction Hash: ${txHash}`);
+  const txHash = await provider.send("eth_sendTransaction", [tx_params]);
+  console.log(`Transaction Hash: ${txHash}`);
 
   return txHash;
 }

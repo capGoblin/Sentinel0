@@ -1,48 +1,45 @@
-import { getFlowContract, Indexer } from '@0glabs/0g-ts-sdk';
-import { ethers } from 'ethers';
-import { NextResponse } from 'next/server';
-import { unlink, readFile, writeFile } from 'fs/promises';
-import { join } from 'path';
-import os from 'os';
-import { config } from 'dotenv';
+import { Indexer } from "@0glabs/0g-ts-sdk";
+import { ethers } from "ethers";
+import { NextResponse } from "next/server";
+import { unlink, readFile } from "fs/promises";
+import { join } from "path";
+import os from "os";
+import { config } from "dotenv";
 config();
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
-  const rootHash = searchParams.get('rootHash');
-  const fileName = searchParams.get('fileName');
+  const rootHash = searchParams.get("rootHash");
+  const fileName = searchParams.get("fileName");
 
   if (!rootHash || !fileName) {
-    return NextResponse.json({ error: 'Root hash and file name are required' }, { status: 400 });
+    return NextResponse.json(
+      { error: "Root hash and file name are required" },
+      { status: 400 }
+    );
   }
 
   try {
     const fileData = await downloadFromStorage(rootHash, fileName);
-    
+
     return new Response(fileData, {
       headers: {
-        'Content-Type': 'application/octet-stream',
-        'Content-Disposition': `attachment; filename="${fileName}"`,
+        "Content-Type": "application/octet-stream",
+        "Content-Disposition": `attachment; filename="${fileName}"`,
       },
     });
   } catch (error) {
-    console.error('Download error:', error);
+    console.error("Download error:", error);
     return NextResponse.json(
-      { error: 'Failed to download file' },
+      { error: "Failed to download file" },
       { status: 500 }
     );
   }
 }
 
 async function downloadFromStorage(rootHash: string, fileName: string) {
-  const evmRpc = "https://16600.rpc.thirdweb.com/";
-  const privateKey = process.env.PRIVATE_KEY!;
-  const flowAddr = "0x0460aA47b41a66694c0a73f667a1b795A5ED3556";
   const indRpc = "https://indexer-storage-testnet-standard.0g.ai";
 
-  const provider = new ethers.JsonRpcProvider(evmRpc);
-  const signer = new ethers.Wallet(privateKey, provider);
-  const flowContract = getFlowContract(flowAddr, signer);
   const indexer = new Indexer(indRpc);
 
   // Create a temporary file path with the original filename
@@ -62,7 +59,7 @@ async function downloadFromStorage(rootHash: string, fileName: string) {
   try {
     await unlink(tempFilePath);
   } catch (error) {
-    console.error('Error cleaning up temp file:', error);
+    console.error("Error cleaning up temp file:", error);
   }
 
   return fileData;

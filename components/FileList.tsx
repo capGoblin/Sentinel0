@@ -4,8 +4,6 @@ import {
   Table,
   TableBody,
   TableCell,
-  TableHead,
-  TableHeader,
   TableRow,
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
@@ -155,7 +153,7 @@ export default function FileList() {
     const routing_code_hash =
       "3e94dd717d6ad2b01bdc65fbe27e90dfd62e6eb5f0474c8310f95bafe5ec3ae8";
     const iface = new ethers.utils.Interface(abi);
-    // @ts-ignore
+    // @ts-expect-error Web3Provider type mismatch with walletProvider
     const provider = new ethers.providers.Web3Provider(walletProvider);
   
   
@@ -164,7 +162,7 @@ export default function FileList() {
     const { userPrivateKeyBytes, userPublicKeyBytes, sharedKey } =
       await generateKeys();
   
-    // @ts-ignore
+    // @ts-expect-error Interface method type mismatch with ethers types
     const callbackSelector = iface.getSighash(
       iface.getFunction("upgradeHandler")
     );
@@ -201,19 +199,16 @@ export default function FileList() {
       callbackGasLimit
     );
   
-    const { ciphertext, payloadHash, payloadSignature, _info } =
-      await encryptPayload(
-        payload,
-        sharedKey,
-        provider,
-        myAddress,
-        userPublicKeyBytes,
-        routing_code_hash,
-        handle,
-        callbackGasLimit,
-        iface,
-        callbackSelector
-      );
+    const { payloadHash, _info } = await encryptPayload(
+      payload,
+      sharedKey,
+      provider,
+      myAddress,
+      userPublicKeyBytes,
+      routing_code_hash,
+      handle,
+      callbackGasLimit,
+    );
   
     const functionData = iface.encodeFunctionData("send", [
       payloadHash,
@@ -367,7 +362,7 @@ export default function FileList() {
                     {file.type === "folder" ? (
                       <Folder className="h-4 w-4" />
                     ) : file.type === "image" ? (
-                      <Image className="h-4 w-4" />
+                      <Image className="h-4 w-4"/>
                     ) : (
                       <FileText className="h-4 w-4" />
                     )}
