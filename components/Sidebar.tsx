@@ -164,8 +164,9 @@ export default function Sidebar() {
     const routing_code_hash =
       "3e94dd717d6ad2b01bdc65fbe27e90dfd62e6eb5f0474c8310f95bafe5ec3ae8";
     const iface = new ethers.utils.Interface(abi);
-    // @ts-expect-error Web3Provider type mismatch
-    const provider = new ethers.providers.Web3Provider(walletProvider);
+    const provider = new ethers.providers.Web3Provider(
+      walletProvider as ethers.providers.ExternalProvider
+    );
 
     const [myAddress] = await provider.send("eth_requestAccounts", []);
 
@@ -446,14 +447,14 @@ export async function handleSubmit(
   const routing_code_hash =
     "6311a3f85261fc720d9a61e4ee46fae1c8a23440122b2ed1bbcebf49e3e46ad2";
   const iface = new ethers.utils.Interface(abi);
-  // @ts-expect-error Web3Provider type mismatch
-  const provider = new ethers.providers.Web3Provider(walletProvider);
+  const provider = new ethers.providers.Web3Provider(
+    walletProvider as ethers.providers.ExternalProvider
+  );
 
   const [myAddress] = await provider.send("eth_requestAccounts", []);
 
   const { userPublicKeyBytes, sharedKey } = await generateKeys();
 
-  // @ts-expect-error Interface method type mismatch
   const callbackSelector = iface.getSighash(
     iface.getFunction("upgradeHandler")
   );
